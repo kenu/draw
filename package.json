@@ -1,0 +1,17 @@
+{
+  "author": "syh<syh@hbilab.org> (http://hbilab.org/)",
+  "name": "hbidraw",
+  "description": "simple drawing chat",
+  "version": "0.1.1",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/kenu/draw.git"
+  },
+  "engines": {
+    "node": ">=0.4.0"
+  },
+  "dependencies": {
+    "socket.io": ">=0.8.x",
+    "options": "latest"
+  }
+}

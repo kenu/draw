@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8">
+            <title>그림판11</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, target-densitydpi=medium-dpi" />
+            <style type="text/css">
+                #clr div{
+                    width: 20px;
+                    height: 20px;
+                    float: left;
+                    cursor: pointer;
+                }
+                
+                </style>
+            <script src='js/socket.io.js'></script>
+            <script src='js/jquery-1.7.1.js'></script>
+            <script >
+            $(function()
+                    {
+                    $("canvas").width( document.width );
+                    });
+            ArrayList = function ArrayList(){
+            this.list=[]; 
+            
+            this.add = function(item){
+			
+			this.list.push(item);
+            };
+            
+            this.get = function(index){
+			return this.list[index];
+            };
+            
+            this.size = function(){
+			return this.list.length;
+            };
+            
+            this.removeAll = function(){
+			this.list=[]; 
+            };
+            this.remove = function(index){
+			
+			var newList=[];
+			
+			for(var i=0 ; i < this.list.length ; i++){
+            if( i != index){ 
+            newList.push(this.list[i]);
+            }
+			}
+			
+			this.list = newList;
+            };
+            };
+            </script>
+            <script type="text/javascript">
+            var context;
+            var isDraw=false; //현재 그리는 상태인지에 대한 여부
+            var lineObject=[]; //ArrayList 선객체를 저장할 배열
+            var drawState=0;
+            var pointList=new ArrayList();
+            var thisColor="black";
+            var thisLineWidth=1;
+            window.onload=function(){
+            var socket = io.connect();
+                
+                //touchs
+                socket.on('touchs', function(data){
+                          
+                          if(isDraw==false){
+                          isDraw=true;
+                          var point=new Point(data.x,data.y,data.width,data.color,true);
+                          pointList.add(point);
+                          }
+                          });
+                
+			socket.on('moused', function(data){
+			
+            if(isDraw==false){
+            isDraw=true;
+            var point=new Point(data.x,data.y,data.width,data.color,true);
+            pointList.add(point);
+			}
+			});
+                
+                //touch end
+                socket.on('touche', function(data){
+                          
+                          isDraw=false;
+                          });
+                
+			socket.on('mouseu', function(data){
+			
+            isDraw=false;
+			});
+                
+                //touchm
+                socket.on('touchm', function(data){
+                          
+                          if(isDraw){
+                          var point=new Point(data.x,data.y,data.width,data.color,false);
+                          pointList.add(point);
+                          drawScreen();
+                          }
+                          });
+                
+			socket.on('mousem', function(data){
+            
+            if(isDraw){
+            var point=new Point(data.x,data.y,data.width,data.color,false);
+            pointList.add(point);
+            drawScreen();
+			}
+			});
+			socket.on('clear', function(data){
+			
+            if(data.clear){
+            context.fillStyle = "#ffffff";
+            context.fillRect(0,0,canvas.width,canvas.height);
+            pointList.removeAll();
+            }
+			});
+            var canvas=document.getElementById("myCanvas");
+            context=canvas.getContext("2d");
+           // $("canvas").attr({	"width":"500",
+           // "height":"500",
+            //"style":"background:#dddddd;cursor:crosshair"});
+            //마우스 무브이벤트
+            $("canvas").bind("mousemove",function(event){
+			console.log("mousemove");
+			if(isDraw){
+            var point=new Point(event.offsetX,event.offsetY,thisLineWidth,thisColor,false);
+            pointList.add(point);
+            drawScreen();
+			
+            socket.emit('mousem',{
+            x : event.offsetX,
+            y : event.offsetY,
+            width : thisLineWidth,
+            color : thisColor,
+            flag : false
+            });
+			}
+            });
+                
+                //touchemove
+                
+                
+            document.addEventListener('touchmove', function(event) {
+             //$(document).bind('touchmove', function(event) { 
+            	event.preventDefault();
+                var touch = event.touches[0];
+               if(isDraw){
+                var point=new Point(touch.pageX,touch.pageY,thisLineWidth,thisColor,false);
+                pointList.add(point);
+                drawScreen();
+                
+                socket.emit('touchm',{
+                            x : touch.pageX,
+                            y : touch.pageY,
+                            width : thisLineWidth,
+                            color : thisColor,
+                            flag : false
+                            });
+                }
+			}, false);
+            
+                
+            $("canvas").bind("mousedown",function(event){
+			if(isDraw==false){
+            console.log("isDraw==true 로 바꿨어요");
+            isDraw=true;
+            var point=new Point(event.offsetX,event.offsetY,thisLineWidth,thisColor,true);
+            pointList.add(point);
+			
+			
+            socket.emit('moused',{
+            x : event.offsetX,
+            y : event.offsetY,
+            width : thisLineWidth,
+            color : thisColor,
+            flag : true
+            });
+			}
+			
+            });
+              
+            //touch start
+            document.addEventListener('touchstart', function(event) {
+            	var touch = event.touches[0];
+                //alert('touchstart : '+touch.pageX+","+touch.pageY);
+                if(isDraw==false){
+                console.log("isDraw==true 로 바꿨어요");
+                isDraw=true;
+                var point=new Point(touch.pageX,touch.pageY,thisLineWidth,thisColor,true);
+            	
+                pointList.add(point);
+                
+                
+                socket.emit('touchs',{
+                            x : touch.pageX,
+                            y : touch.pageY,
+                            width : thisLineWidth,
+                            color : thisColor,
+                            flag : true
+                            });
+                }
+            }, false);
+        
+               
+
+                
+            $("canvas").bind("mouseup",function(event){
+			
+			isDraw=false;
+			socket.emit('mouseu',{
+            flag : false
+            });
+			console.log("isDraw==false 로 바꿨어요");
+            });
+                
+                //touch end
+                
+                
+               document.addEventListener('touchend', function(event) {
+            	   isDraw=false;
+                   socket.emit('touche',{
+                               flag : false
+                               });
+                   console.log("isDraw==false 로 바꿨어요");
+            }, false);
+              
+                
+                
+            $("canvas").bind("mouseenter",function(event){
+			console.log("mouseenter");
+            });
+                
+            $("canvas").bind("mouseleave",function(event){
+			console.log("mouseleave");
+			isDraw=false;
+            });
+                
+            $("#clr > div").click(function(){  //팔레트 선택 
+			console.log("click");
+			thisLineWidth=1;
+			thisColor = $(this).css("background-color");
+            });
+                
+            $("#clear").click(function(){
+			context.fillStyle = "#ffffff";
+			context.fillRect(0,0,canvas.width,canvas.height);
+			pointList.removeAll();
+			socket.emit('clear',{
+            clear : true
+            });
+            });
+                
+            $("#save").click(function(){
+			console.log(canvas.toDataURL());
+			$("#copyImage").attr("src",canvas.toDataURL());
+            });
+                
+            $("#eraser").click(function(){
+			thisLineWidth=10;
+			thisColor="#ffffff";
+            });
+            
+            socket.on('message_start', function(data){
+            //if($('#message').val()=="") return;
+            update(data.name+":"+data.message);
+			});
+			socket.on('message_end', function(data){
+            sendAll(data.name+":"+data.message);
+			});
+			$('button').click(function(){
+            socket.emit('message',{
+            name : $('#name').val(),
+            message : $('#message').val(),
+            date : new Date().toUTCString()
+            });
+			});
+			$("#message").keyup(function (event) {
+            if (event.keyCode == 13) {
+            socket.emit('message_end',{
+            name : $('#name').val(),
+            message : $('#message').val(),
+            date : new Date().toUTCString()
+            });
+            $('#message').val('');
+            }else {
+            if($('#message').val()=="") return;
+            socket.emit('message_start',{
+            name : $('#name').val(),
+            message : $('#message').val(),
+            date : new Date().toUTCString()
+            });
+            }
+			});
+			
+			$("#message").keydown(function (event) {
+            
+            if(event.keyCode==8 && $('#message').val().length==1){
+            
+            socket.emit('message_start',{
+            name : $('#name').val(),
+            message : '',
+            date : new Date().toUTCString()
+            });
+            }
+			});
+			
+			
+            
+            }
+            function drawScreen(){
+            if(pointList.size()>2){
+			for(var i=0 ; i < pointList.size() ; i++){
+            if(pointList.get(i).isStart){ //시작점이라면 
+            context.beginPath();
+            context.moveTo(pointList.get(i).x, pointList.get(i).y);
+            }else{
+            context.lineWidth=pointList.get(i).width;
+            context.lineTo(pointList.get(i).x, pointList.get(i).y);
+            context.strokeStyle=pointList.get(i).color;
+            context.stroke();
+            }
+			}
+			//context.closePath();
+			//context.strokeStyle="red";
+			//context.stroke();
+            }
+            }
+            Point = function(x,y,width,color,isStart){
+            this.x=x;
+            this.y=y;
+            this.width=width;
+            this.color=color;
+            this.isStart=isStart;
+            };
+            
+            function sendAll(message){
+            $('.now').detach();
+            $('<li/>').text(message).prependTo('#content');
+            $('<li/>').addClass('now').prependTo("#content");
+            $(".now").css("visibility","hidden");
+            $('#message').val('');
+            }
+            function update(message){
+            $(".now").css("visibility","visible");
+            $('.now').text(message);
+            }
+            
+            </script>
+    </head>
+    <body>
+       
+            <canvas id="myCanvas"  width="300" height="300" style="border:solid 1px #000000; background-color:#ffffff;"></canvas>
+       
+        
+        <div id="clr">
+            <div style="background-color:black" ></div>
+            <div style="background-color:red"></div>
+            <div style="background-color:green"></div>
+            <div style="background-color:blue"></div>
+        </div>
+        
+        <a href="#" id="clear">화면초기화</a>
+        <!--<a href="#" id="save">별도보관</a>-->
+        <a href="#" id="eraser">지우개</a><br/>
+        id : <input id="name"/>
+        message : <input id="message"/>
+        
+        <ul id="content">
+            <li class='now' style="visibility: hidden;"></li>
+        </ul>
+        
+        
+    </body>
+</html>
