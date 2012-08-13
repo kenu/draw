@@ -18,7 +18,11 @@
             <script >
             $(function()
                     {
-                    $("canvas").width( document.width );
+                    $("#myCanvas").css({
+                    	 "width": "300px",
+                    	 "height":"300px",
+                    	 "border":"solid 1px #000000",
+                    	 "background-color":"#ffffff;"});
                     });
             ArrayList = function ArrayList(){
             this.list=[]; 
@@ -122,9 +126,7 @@
 			});
             var canvas=document.getElementById("myCanvas");
             context=canvas.getContext("2d");
-           // $("canvas").attr({	"width":"500",
-           // "height":"500",
-            //"style":"background:#dddddd;cursor:crosshair"});
+
             //마우스 무브이벤트
             $("canvas").bind("mousemove",function(event){
 			console.log("mousemove");
@@ -355,7 +357,7 @@
     </head>
     <body>
        
-            <canvas id="myCanvas"  width="300" height="300" style="border:solid 1px #000000; background-color:#ffffff;"></canvas>
+            <canvas id="myCanvas"></canvas>
        
         
         <div id="clr">

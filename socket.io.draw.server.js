@@ -1,22 +1,40 @@
 var fs = require('fs');
+var url = require('url');
 var server = require('http').createServer();
 var io = require('socket.io').listen(server);
-//var connect = require('connect');
-//var server = connect.createServer();
-//server.use(connect.static(__dirname+'/Resources'));
-
-//var jquery = require('jquery-1.7.1');
-//var gura = require('guraUtil');
 
 server.listen(52273, function(){
 	console.log('Server Running at http://localhost:52273');
 });
 
 server.on('request', function(request, response){
-	fs.readFile('drawLine.html', function(error, data){
-		response.writeHead(200, {'Content-Type':'text/html'});
-		response.end(data);
-	});
+	var url_parts = url.parse(request.url, true);
+	console.log(":"+url_parts.pathname);
+	switch(url_parts.pathname) {
+		case '/':
+		case 'index.html':
+		case 'drawLine.html':
+			fs.readFile('drawLine.html', function(error, data){
+				response.writeHead(200, {'Content-Type':'text/html'});
+				response.end(data);
+			});
+		    break;
+		case '/js/jquery-1.7.1.js':
+			fs.readFile('js/jquery-1.7.1.js', function(error, data){
+				response.writeHead(200, {'Content-Type':'text/html'});
+				response.end(data);
+			});
+		    break;
+		case '/js/socket.io.js':
+			fs.readFile('js/socket.io.js', function(error, data){
+				response.writeHead(200, {'Content-Type':'text/html'});
+				response.end(data);
+			});
+		    break;
+		default:
+		    response.write('Unknown path: ' + JSON.stringify(url_parts));
+		    response.end();
+	}
 });
 
 
