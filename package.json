@@ -7,11 +7,8 @@
     "type": "git",
     "url": "git://github.com/kenu/draw.git"
   },
-  "engines": {
-    "node": ">=0.4.0"
-  },
   "dependencies": {
-    "socket.io": ">=0.8.x",
-    "options": "latest"
+    "options": "^0.0.6",
+    "socket.io": "^4.8.0"
   }
 }
